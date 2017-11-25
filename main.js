@@ -54,7 +54,9 @@ function getInterpolatedPath(vPathData){
         
         //create interpolated points
         for(var k=0;k<diff;k++){    
-            var tk = t0 + k;
+            var tk = new Date(t0.toUTCString());
+            tk.setMilliseconds(k);
+
              var ak = (a0 + angle_step*k) 
              if(dataInDegrees){
                  ak = ak * (Math.PI/180);
@@ -62,7 +64,7 @@ function getInterpolatedPath(vPathData){
              var lk = (l0 + length_step*k*dirElong);
              vectorpathInterp.push(
                 {   
-                    time: tk.toLocaleString(),
+                    time: tk.toTimeString(),
                     angle: ak,
                     length : lk
                 }
@@ -219,6 +221,8 @@ function drawVector(){
 
     
     if(vectorPathInterp.length == 0){return;}
+    
+    
     var v = vectorPathInterp[vectorPathInterpStep];
 
     //crete a vector 
@@ -230,7 +234,12 @@ function drawVector(){
     ctx.lineTo(w.getX() + center.x,w.getY()+center.y);
     ctx.stroke();
 
-    ctx.font = '40px';
-    ctx.fillText(v.time, 20, 20);      
 
+    
+    ctx.font = '20pt';
+    ctx.fillText(v.time, 20, 20);      
+    ctx.fillText("Angle:" + Math.trunc(v.angle*(180/Math.PI)) + "deg.", 20, 40);
+    ctx.fillText("Length:"+Math.trunc(v.length), 20, 60);
+    
+    
 }
