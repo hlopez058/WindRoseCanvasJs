@@ -1,0 +1,11 @@
+{
+    "Title":"WTG02-WakeSteering",
+    "Xmin":0,
+    "Xmax":360,
+    "Ymin":0,
+    "Ymax":30,
+    "YAxisLabel":"Wind Speed",
+    "XAxisLabel":"Wind Direction",
+    "Vectors":["WindVane","WakeSteer","NacellePosition"],
+    "References":[ {"Label":"WTG03","X":100,"Y":30}]
+}

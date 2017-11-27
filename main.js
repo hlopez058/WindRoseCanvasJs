@@ -34,6 +34,14 @@ function getInterpolatedPath(vPathData){
     var vectorpathInterp = [];
     vPathDataMax = vPathData.length
 
+    //normalize the length parameter
+    var maxL =0;
+    for(var i = 1 ; i<vPathDataMax;i++)
+    {
+        var v = vPathData[i];
+        if(v.length>maxL){ maxL =v.length}
+    }
+
     //interpolate vPath 
     for(var i = 1 ; i<vPathDataMax;i++){
         var v0 = vPathData[i-1];
@@ -47,8 +55,8 @@ function getInterpolatedPath(vPathData){
         var a1 = v1.angle;
         var angle_step = Math.abs(a0-a1) / diff;
         //get interval of length 
-        var l0 = v0.length;
-        var l1 = v1.length;
+        var l0 = v0.length/maxL;
+        var l1 = v1.length/maxL;
         var dirElong = l0>l1?-1:1;
         var length_step = Math.abs(l1-l0) / diff;
         
@@ -138,9 +146,7 @@ function update(){
     //clear canvas for animation frame
     ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height)
 
-    //set the background 
-    drawChart()
-
+    
     //load new set of interpolated data
     if(newDataAvailable){
         vectorPathInterp = getInterpolatedPath(vectorPathData);
@@ -156,72 +162,110 @@ function update(){
     }
     
     drawVector();
+    
+
     vectorPathInterpStep = vectorPathInterpStep + (speed-1);
     var progressNow = (vectorPathInterpStep/vectorPathInterpMax * 100) ;
     $('.progress-bar').css('width', progressNow+'%').attr('aria-valuenow', progressNow);
 
+
+    //set the background 
+    drawChart()
+
+    
     //new animation frame
     requestAnimationFrame(update);
 }
 
 function drawChart(){
-    
 
-    //draw circle in center screen
-    ctx.beginPath();
-    ctx.arc(center.x,center.y,chartSize,0,2*Math.PI);
-    ctx.stroke(); 
 
     ctx.save();
     ctx.strokeStyle="gray";
-    for(var i=.9; i >=.1 ; i-=.1){
+    //draw y axis
+    var ymax = 30;
+    var ydiv =10
+    var ystep = ymax/ydiv;
+    var ylabel = ystep;
+    for(var i=.1; i <=1 ; i+=.1){
         ctx.setLineDash([5, 3]);
         //draw circle in center screen
+        ctx.fillText(ylabel,center.x+10,center.y - chartSize*i);
+        
+        if(i!=1){
         ctx.beginPath();
         ctx.arc(center.x,center.y,chartSize*i,0,2*Math.PI);
-        ctx.stroke(); 
+        ctx.stroke();
+        } 
+        ylabel+=ystep;
     }
 
-    for(var i=.1; i <=1 ; i+=.1)
+    //draw guidelines
+    var xmax = 360;
+    var xdiv = 20;
+    var xstep = xmax/xdiv;
+    var xlabel = 0;
+    for(var i=0; i <=1 ; i+=.1)
+    {
+
+        var ang = Math.PI*i;
+        ctx.beginPath();
+        ctx.moveTo(center.x,center.y);
+        var xpos = Math.cos(ang)*(chartSize+30) + center.x;
+        var ypos = Math.sin(ang)*(chartSize+30) + center.y;
+        ctx.lineTo(xpos,ypos);
+        ctx.fillText(xlabel,xpos,ypos);
+        if(i==0){ctx.fillText(","+xmax,xpos+10,ypos);}
+        ctx.stroke();
+
+        xlabel+= xstep;
+    }
+
+    for(var i=.1; i <=.9 ; i+=.1)
     {
         var ang = Math.PI*i;
         ctx.beginPath();
         ctx.moveTo(center.x,center.y);
-        ctx.lineTo(Math.cos(ang)*chartSize + center.x,Math.sin(ang)*chartSize + center.y);
+        var xpos = -Math.cos(ang)*(chartSize+30) + center.x;
+        var ypos = -Math.sin(ang)*(chartSize+30) + center.y;
+        ctx.lineTo(xpos,ypos);
+        ctx.fillText(xlabel,xpos,ypos);
         ctx.stroke();    
-    }
-
-    for(var i=.1; i <=1 ; i+=.1)
-    {
-        var ang = Math.PI*i;
-        ctx.beginPath();
-        ctx.moveTo(center.x,center.y);
-        ctx.lineTo(Math.cos(ang)*chartSize + center.x,-Math.sin(ang)*chartSize + center.y);
-        ctx.stroke();    
+        
+        xlabel+= xstep;
     }
     ctx.restore();
 
-       
+    
+    //draw circle in center screen
+    ctx.save();
+    ctx.beginPath();
+    ctx.lineWidth =2;
+    ctx.arc(center.x,center.y,chartSize,0,2*Math.PI);
+    ctx.stroke();   
+    ctx.restore(); 
+
     //draw lines
     ctx.beginPath();
     ctx.moveTo(center.x-chartSize,center.y);
     ctx.lineTo(center.x+chartSize,center.y);
     ctx.stroke();
+    
+    ctx.beginPath();
     ctx.moveTo(center.x,center.y-chartSize);
     ctx.lineTo(center.x,center.y+chartSize);
     ctx.stroke();
-
+       
 
 
     //draw the 
     return ctx;
 }
 
-function drawVector(){
+function drawVector()
+{
 
-    
     if(vectorPathInterp.length == 0){return;}
-    
     
     var v = vectorPathInterp[vectorPathInterpStep];
 
@@ -230,16 +274,19 @@ function drawVector(){
     w.setAngle(v.angle)
     w.setLength(v.length * chartSize);
     
+    ctx.save();
+    ctx.lineWidth=10;
+    ctx.beginPath();
+    ctx.strokeStyle="rgba(127,255,0,0.7)";
+    ctx.lineCap="round";
     ctx.moveTo(center.x,center.y);
     ctx.lineTo(w.getX() + center.x,w.getY()+center.y);
     ctx.stroke();
+    ctx.restore();
 
 
-    
-    ctx.font = '20pt';
+    ctx.font = '40pt';
     ctx.fillText(v.time, 20, 20);      
     ctx.fillText("Angle:" + Math.trunc(v.angle*(180/Math.PI)) + "deg.", 20, 40);
-    ctx.fillText("Length:"+Math.trunc(v.length), 20, 60);
-    
-    
+    ctx.fillText("Length:"+Math.trunc(v.length), 20, 60);    
 }
